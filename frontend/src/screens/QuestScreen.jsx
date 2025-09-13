@@ -41,23 +41,10 @@ const TAUNTS = (lang) => ({
 
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function dayKey(d=new Date()){const t=new Date(d);t.setHours(0,0,0,0);return t.toISOString().slice(0,10)}
-function haversineFix(lat1,lon1,lat2,lon2){const R=6371000,toRad=x=>x*Math.PI/180;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const s1=Math.sin(dLat/2),s2=Math.sin(dLon/2);const a=s1*s1+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*s2*s2;return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
+function haversineFix(lat1,lon1,lat2,lon2){const R=6371000,toRad=x=>x*Math.PI/180;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const s1=Math.sin(dLat/2),s2=Math.sin(dLon/2);const a=s1*s1+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*s2*s2;return 2*R*Math.atan2(Math.sqrt(Math.sqrt(a)*Math.sqrt(a)),Math.sqrt(1-a))}
 
-/* ------------------- 기구운동 멀티셀렉트 ------------------- */
-const EQUIP_OPTIONS = [
-  { key: 'treadmill', label: '트레드밀' },
-  { key: 'cycle',     label: '사이클' },
-  { key: 'row',       label: '로잉머신' },
-  { key: 'smith',     label: '스미스 머신' },
-  { key: 'squat',     label: '스쿼트랙' },
-  { key: 'bench',     label: '벤치프레스' },
-  { key: 'lat',       label: '랫풀다운' },
-  { key: 'cable',     label: '케이블 머신' },
-  { key: 'legpress',  label: '레그프레스' },
-  { key: 'dumbbell',  label: '덤벨' },
-]
-
-function MultiSelectDropdown({ label = '기구운동 선택', options, selected, onChange }) {
+/* ------------------- 멀티 셀렉트 드롭다운 공통 ------------------- */
+function MultiSelectDropdown({ label, options, selected, onChange }) {
   const [open, setOpen] = useState(false)
 
   function toggle(k) {
@@ -102,6 +89,41 @@ function MultiSelectDropdown({ label = '기구운동 선택', options, selected,
     </View>
   )
 }
+
+/* ------------------- 카테고리별 옵션 ------------------- */
+const STRETCH_OPTIONS = [
+  { key: 'neck',      label: '목/어깨 스트레칭' },
+  { key: 'ham',       label: '햄스트링 스트레칭' },
+  { key: 'hip',       label: '고관절/둔근 스트레칭' },
+  { key: 'back',      label: '허리/척추 스트레칭' },
+  { key: 'calf',      label: '종아리/발목 스트레칭' },
+  { key: 'chest',     label: '가슴/흉곽 스트레칭' },
+  { key: 'wrist',     label: '손목/팔꿈치 스트레칭' },
+]
+
+const HOME_OPTIONS = [
+  { key: 'full',      label: '전신 홈트' },
+  { key: 'lower',     label: '하체 홈트' },
+  { key: 'upper',     label: '상체 홈트' },
+  { key: 'core',      label: '코어/복근' },
+  { key: 'hiit',      label: 'HIIT(인터벌)' },
+  { key: 'yoga',      label: '요가' },
+  { key: 'pilates',   label: '필라테스' },
+  { key: 'mobility',  label: '가동성/밸런스' },
+]
+
+const EQUIP_OPTIONS = [
+  { key: 'treadmill', label: '트레드밀' },
+  { key: 'cycle',     label: '사이클' },
+  { key: 'row',       label: '로잉머신' },
+  { key: 'smith',     label: '스미스 머신' },
+  { key: 'squat',     label: '스쿼트랙' },
+  { key: 'bench',     label: '벤치프레스' },
+  { key: 'lat',       label: '랫풀다운' },
+  { key: 'cable',     label: '케이블 머신' },
+  { key: 'legpress',  label: '레그프레스' },
+  { key: 'dumbbell',  label: '덤벨' },
+]
 /* ---------------------------------------------------------- */
 
 export default function QuestScreen(){
@@ -120,7 +142,9 @@ export default function QuestScreen(){
   const today = dayKey()
   const taunts = useMemo(()=>TAUNTS(lang), [lang])
 
-  // ✅ 기구운동 멀티 선택 상태
+  // ✅ 각 카테고리별 멀티 선택 상태
+  const [selectedStretch, setSelectedStretch] = useState([])
+  const [selectedHome, setSelectedHome] = useState([])
   const [selectedEquip, setSelectedEquip] = useState([])
 
   async function loadOrGenQuests(){
@@ -240,7 +264,19 @@ export default function QuestScreen(){
           <Text style={styles.quip}>{quip}</Text>
         </View>
 
-        {/* ✅ 검색 제거, 기구운동 멀티 선택만 남김 */}
+        {/* ✅ 세 가지 카테고리 멀티 선택 */}
+        <MultiSelectDropdown
+          label="스트레칭 선택"
+          options={STRETCH_OPTIONS}
+          selected={selectedStretch}
+          onChange={setSelectedStretch}
+        />
+        <MultiSelectDropdown
+          label="홈트 선택"
+          options={HOME_OPTIONS}
+          selected={selectedHome}
+          onChange={setSelectedHome}
+        />
         <MultiSelectDropdown
           label="기구운동 선택"
           options={EQUIP_OPTIONS}
