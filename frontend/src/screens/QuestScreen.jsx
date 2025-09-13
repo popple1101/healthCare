@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { View, Text, ImageBackground, StyleSheet, Animated, AppState, ActivityIndicator, TouchableOpacity } from 'react-native'
+import { View, Text, ImageBackground, StyleSheet, Animated, AppState, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import * as Location from 'expo-location'
@@ -43,28 +43,23 @@ function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function dayKey(d=new Date()){const t=new Date(d);t.setHours(0,0,0,0);return t.toISOString().slice(0,10)}
 function haversineFix(lat1,lon1,lat2,lon2){const R=6371000,toRad=x=>x*Math.PI/180;const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);const s1=Math.sin(dLat/2),s2=Math.sin(dLon/2);const a=s1*s1+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*s2*s2;return 2*R*Math.atan2(Math.sqrt(Math.sqrt(a)*Math.sqrt(a)),Math.sqrt(1-a))}
 
-/* ------------------- 멀티 셀렉트 드롭다운 공통 ------------------- */
 function MultiSelectDropdown({ label, options, selected, onChange }) {
   const [open, setOpen] = useState(false)
-
   function toggle(k) {
     if (selected.includes(k)) onChange(selected.filter(x => x !== k))
     else onChange([...selected, k])
   }
-
   function labelFromKeys(keys) {
     if (!keys?.length) return '선택하세요'
     const picked = options.filter(o => keys.includes(o.key)).map(o => o.label)
     return picked.join(', ')
   }
-
   return (
     <View style={{ zIndex: 50 }}>
       <TouchableOpacity onPress={() => setOpen(v => !v)} style={styles.ddBtn}>
         <Text style={styles.ddBtnTxt}>{label}</Text>
         <Text style={styles.ddBtnVal} numberOfLines={1}>{labelFromKeys(selected)}</Text>
       </TouchableOpacity>
-
       {open && (
         <View style={styles.ddPanel}>
           {options.map(opt => {
@@ -90,7 +85,6 @@ function MultiSelectDropdown({ label, options, selected, onChange }) {
   )
 }
 
-/* ------------------- 카테고리별 옵션 ------------------- */
 const STRETCH_OPTIONS = [
   { key: 'neck',      label: '목/어깨 스트레칭' },
   { key: 'ham',       label: '햄스트링 스트레칭' },
@@ -124,7 +118,6 @@ const EQUIP_OPTIONS = [
   { key: 'legpress',  label: '레그프레스' },
   { key: 'dumbbell',  label: '덤벨' },
 ]
-/* ---------------------------------------------------------- */
 
 export default function QuestScreen(){
   const navigation = useNavigation()
@@ -142,7 +135,6 @@ export default function QuestScreen(){
   const today = dayKey()
   const taunts = useMemo(()=>TAUNTS(lang), [lang])
 
-  // ✅ 각 카테고리별 멀티 선택 상태
   const [selectedStretch, setSelectedStretch] = useState([])
   const [selectedHome, setSelectedHome] = useState([])
   const [selectedEquip, setSelectedEquip] = useState([])
@@ -239,7 +231,7 @@ export default function QuestScreen(){
   const goalKm = walkQ ? walkQ.target.toFixed(1) : '0.0'
 
   const startSquat = () => squatQ && navigation.navigate('TACoach', { mode: 'squat', target: squatQ.target })
-  const startPushup = () => pushupQ && navigation.navigate('TACoach', { mode: 'pushup', target: pushupQ.target })
+  const startSitup = () => pushupQ && navigation.navigate('TACoach', { mode: 'pushup', target: pushupQ.target })
 
   if(!fontsLoaded){
     return(
@@ -253,7 +245,9 @@ export default function QuestScreen(){
     <ImageBackground source={require('../../assets/background/home.png')} style={{flex:1}} resizeMode="cover">
       <Text style={[styles.screenTitle,{top:insets.top+8}]}>{t('BURNING') || 'BURNING'}</Text>
 
-      <View style={{ flex:1, paddingTop: insets.top + 88, paddingHorizontal: 18, gap: 16 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: insets.top + 88, paddingHorizontal: 18, paddingBottom: insets.bottom + 40, gap: 16 }}
+      >
         <View style={styles.card}>
           <Text style={styles.title}>{t('DAILY_QUESTS') || 'DAILY QUESTS'}</Text>
           <Text style={styles.questMain}>{(t('WALK') || 'WALK')} {goalKm} km</Text>
@@ -264,7 +258,15 @@ export default function QuestScreen(){
           <Text style={styles.quip}>{quip}</Text>
         </View>
 
-        {/* ✅ 세 가지 카테고리 멀티 선택 */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity onPress={startSquat} disabled={!squatQ} style={[styles.actionBtn, !squatQ && styles.disabled]}>
+            <Text style={styles.actionTxt}>스쿼트 시작</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={startSitup} disabled={!pushupQ} style={[styles.actionBtn, !pushupQ && styles.disabled]}>
+            <Text style={styles.actionTxt}>푸쉬업 시작</Text>
+          </TouchableOpacity>
+        </View>
+
         <MultiSelectDropdown
           label="스트레칭 선택"
           options={STRETCH_OPTIONS}
@@ -283,18 +285,7 @@ export default function QuestScreen(){
           selected={selectedEquip}
           onChange={setSelectedEquip}
         />
-
-        {/* (선택) 스쿼트/푸쉬업 코치 바로가기 버튼을 보조로 남기고 싶으면 주석 해제
-        <View style={styles.quickRow}>
-          <TouchableOpacity onPress={startSquat} disabled={!squatQ} style={[styles.quickBtn, !squatQ && styles.disabled]}>
-            <Text style={styles.quickTxt}>스쿼트 시작</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={startPushup} disabled={!pushupQ} style={[styles.quickBtn, !pushupQ && styles.disabled]}>
-            <Text style={styles.quickTxt}>푸쉬업 시작</Text>
-          </TouchableOpacity>
-        </View>
-        */}
-      </View>
+      </ScrollView>
     </ImageBackground>
   )
 }
@@ -310,7 +301,11 @@ const styles=StyleSheet.create({
   barText:{textAlign:'center',fontFamily:FONT,fontSize:14,lineHeight:17,color:'#111',includeFontPadding:true},
   quip:{fontFamily:FONT,fontSize:14,lineHeight:17,color:'#000',marginTop:2,includeFontPadding:true},
 
-  /* 드롭다운 */
+  actionRow:{ flexDirection:'row', gap:10 },
+  actionBtn:{ flex:1, backgroundColor:'#111827', borderRadius:12, paddingVertical:12, alignItems:'center' },
+  actionTxt:{ fontFamily:FONT, color:'#fff', fontSize:16, lineHeight:20, includeFontPadding:true },
+  disabled:{ opacity:0.5 },
+
   ddBtn:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', borderWidth:2, borderColor:'#111', borderRadius:12, paddingHorizontal:12, height:48, backgroundColor:'rgba(255,255,255,0.9)' },
   ddBtnTxt:{ fontFamily:FONT, fontSize:16, color:'#111', marginRight:10 },
   ddBtnVal:{ flex:1, textAlign:'right', fontFamily:FONT, fontSize:14, color:'#4B5563' },
@@ -322,9 +317,7 @@ const styles=StyleSheet.create({
   ddAction:{ flex:1, borderRadius:10, height:40, alignItems:'center', justifyContent:'center' },
   ddActionTxt:{ fontFamily:FONT, fontSize:15 },
 
-  /* (옵션) 빠른 버튼 */
   quickRow:{ flexDirection:'row', gap:10 },
   quickBtn:{ flex:1, backgroundColor:'#111827', borderRadius:12, paddingVertical:12, alignItems:'center' },
   quickTxt:{ fontFamily:FONT, color:'#fff', fontSize:16, lineHeight:20, includeFontPadding:true },
-  disabled:{ opacity:0.5 },
 })
