@@ -1,0 +1,63 @@
+server:
+  port: 3000
+  address: 0.0.0.0 # 외부 접근 허용
+
+spring:
+  config:
+    import: optional:file:./.env
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@//localhost:1521/xe
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+    open-in-view: false
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/index.html
+    display-request-duration: true
+    try-it-out-enabled: true
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    root: info
+    org:
+      springframework:
+        web: debug
+        security: debug
+      hibernate:
+        SQL: debug
+
+# 영양학 API
+nutri:
+  base-url: http://api.data.go.kr
+  endpoint: /openapi/tn_pubr_public_nutri_info_api
+  service-key-decoding: "${PUBLIC_DATA_API_KEY}" # 환경 변수 참조
+  service-key-encoding: ""
+# Gemini AI API
+gemini:
+  api:
+    base-url: https://generativelanguage.googleapis.com
+    key: "${GEMINI_API_KEY}" # 환경 변수 참조
+tesseract:
+  datapath: src/main/resources/tessdata
+
+# Youtube API
+youtube:
+  api:
+    key: ${YOUTUBE_API_KEY} # 환경 변수 참조
+  base-url: https://www.googleapis.com/youtube/v3
