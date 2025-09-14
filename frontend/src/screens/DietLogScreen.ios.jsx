@@ -70,18 +70,18 @@ export default function DietLogScreen() {
     }, [fetchDay, dateKey])
   );
 
-  // 공통 추가 콜백 (UI 즉시 반영 후 서버 저장)
+  // 공통 추가 콜백 (UI 먼저 반영 후 서버 저장)
   const handleAddMeal = async (entry, type) => {
     const payload = { ...entry, timestamp: entry.timestamp ?? Date.now() };
 
-    // 1) 화면 즉시 반영
+    // 1) UI 먼저 반영
     setDayMeals(prev => ({
       morning: type === 'morning' ? [...prev.morning, payload] : prev.morning,
       lunch:   type === 'lunch'   ? [...prev.lunch,   payload] : prev.lunch,
       dinner:  type === 'dinner'  ? [...prev.dinner,  payload] : prev.dinner,
     }));
 
-    // 2) 백엔드 저장
+    // 2) 백엔드 저장(뒤에서. UI 딜레이 방지)
     try {
       await apiPost('/api/diet/save', {
         date: dateKey,
