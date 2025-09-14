@@ -157,6 +157,9 @@ export default function DietLogScreen() {
                        } }}
                     style={{ alignSelf: 'center', width: '100%' }}
                     theme={{
+                      textDayFontFamily: 'DungGeunMo',
+                      textMonthFontFamily: 'DungGeunMo',
+                      textDayHeaderFontFamily: 'DungGeunMo',
                       textDayFontSize: 16,
                       textMonthFontSize: 18,
                       textDayHeaderFontSize: 12,
